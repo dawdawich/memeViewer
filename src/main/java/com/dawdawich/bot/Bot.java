@@ -29,21 +29,20 @@ public class Bot extends TelegramLongPollingBot {
     public static Bot instance;
 
     private static HashMap<String, List<String>> mediaGroup = new HashMap<>();
+    private Configuration conf;
+    private Long chatId;
+    private PhotoQueue photoQueue;
 
-    private Long chatId = Configuration.getInstance().getChatId();
-
-    public Bot() throws IOException {
+    public Bot(Configuration conf, PhotoQueue photoQueue) {
+        this.conf = conf;
+        chatId = conf.getChatId();
+        this.photoQueue = photoQueue;
     }
 
     @Override
     public String getBotToken() {
         instance = this;
-        try {
-            return Configuration.getInstance().getBotId();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
+        return conf.getBotId();
     }
 
     @Override
@@ -56,7 +55,8 @@ public class Bot extends TelegramLongPollingBot {
         try {
             Message message = update.getMessage();
             CallbackQuery callbackQuery = update.getCallbackQuery();
-            if ((message != null && BotHelper.checkUser(message.getFrom().getId())) || (callbackQuery != null && BotHelper.checkUser(callbackQuery.getFrom().getId()))) {
+            if ((message != null && BotHelper.checkUser(message.getFrom().getId(), conf.getIds())) ||
+                    (callbackQuery != null && BotHelper.checkUser(callbackQuery.getFrom().getId(), conf.getIds()))) {
                 try {
                     callbackHandler(callbackQuery);
                 } catch (IOException e) {
@@ -75,8 +75,8 @@ public class Bot extends TelegramLongPollingBot {
         return "WebFoeMyself Bot";
     }
 
-    private void getPhotos(Message chatId) throws IOException {
-        File memeFolder = new File(Configuration.getInstance().getPath() + File.separator);
+    private void getPhotos(Message chatId) {
+        File memeFolder = new File(conf.getPath() + File.separator);
         File[] memes = memeFolder.listFiles();
         if (memes != null) {
             Arrays.stream(memes)
@@ -189,7 +189,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private void getQueueSize(Message message) throws TelegramApiException {
         SendMessage sendMessage = new SendMessage();
-        sendMessage.setText("Memes in queue: " + PhotoQueue.getInstance().getSize());
+        sendMessage.setText("Memes in queue: " + photoQueue.getSize());
         sendMessage.setChatId(message.getChatId());
         execute(sendMessage);
     }
@@ -244,7 +244,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private void postPhoto(String query, Message message, boolean withText) throws TelegramApiException, IOException {
         String[] queryParams = query.split("[|]");
-        BotHelper.deleteFile(queryParams[0]);
+        BotHelper.deleteFile(queryParams[0], conf.getPath());
         if (withText) {
             sendPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId, message.getCaption()));
         } else {
@@ -255,7 +255,7 @@ public class Bot extends TelegramLongPollingBot {
 
     private void postPhotos(String query, Message message, boolean withText) throws IOException, TelegramApiException {
         String[] parseQuery = query.split("[|]");
-        File folder = new File(Configuration.getInstance().getPath() + File.separator + parseQuery[0]);
+        File folder = new File(conf.getPath() + File.separator + parseQuery[0]);
         File textFile = new File(folder.getAbsolutePath() + ".txt");
         String[] messagesIds = parseQuery[1].split(",");
 
@@ -271,18 +271,18 @@ public class Bot extends TelegramLongPollingBot {
                 e.printStackTrace();
             }
         });
-        BotHelper.deleteFile(folder.getName());
+        BotHelper.deleteFile(folder.getName(), conf.getPath());
         execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
     }
 
     private void deletePhoto(String fileName, Message message) throws TelegramApiException, IOException {
-        BotHelper.deleteFile(fileName);
+        BotHelper.deleteFile(fileName, conf.getPath());
         execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
     }
 
     private void deletePhotos(String query, Message message) throws IOException, TelegramApiException {
         String[] parseQuery = query.split("[|]");
-        File folder = new File(Configuration.getInstance().getPath() + File.separator + parseQuery[0]);
+        File folder = new File(conf.getPath() + File.separator + parseQuery[0]);
         String[] messagesIds = parseQuery[1].split(",");
         Arrays.stream(messagesIds).forEach(s -> {
             try {
@@ -291,7 +291,7 @@ public class Bot extends TelegramLongPollingBot {
                 e.printStackTrace();
             }
         });
-        BotHelper.deleteFile(folder.getName());
+        BotHelper.deleteFile(folder.getName(), conf.getPath());
         execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
     }
 
@@ -300,11 +300,11 @@ public class Bot extends TelegramLongPollingBot {
         String[] queryParams = query.split("[|]");
         int queue;
         if (withText) {
-            queue = PhotoQueue.getInstance().addPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId, message.getCaption()));
+            queue = photoQueue.addPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId, message.getCaption()));
         } else {
-            queue = PhotoQueue.getInstance().addPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId));
+            queue = photoQueue.addPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId));
         }
-        BotHelper.deleteFile(queryParams[0]);
+        BotHelper.deleteFile(queryParams[0],conf.getPath());
         execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
         SendMessage queueSize = new SendMessage();
         queueSize.setChatId(message.getChatId());
@@ -315,14 +315,14 @@ public class Bot extends TelegramLongPollingBot {
 
     private void earmarkedPhotos(String query, Message message, boolean withText) throws TelegramApiException, IOException {
         String[] parseQuery = query.split("[|]");
-        File folder = new File(Configuration.getInstance().getPath() + File.separator + parseQuery[0]);
+        File folder = new File(conf.getPath() + File.separator + parseQuery[0]);
         File textFile = new File(folder.getAbsolutePath() + ".txt");
         String[] messagesIds = parseQuery[1].split(",");
         int queue;
         if (withText && textFile.exists()) {
-            queue = PhotoQueue.getInstance().addPhoto(BotHelper.crateMediaGroup(mediaGroup.get(parseQuery[0]), chatId, BotHelper.getAttachText(textFile)));
+            queue = photoQueue.addPhoto(BotHelper.crateMediaGroup(mediaGroup.get(parseQuery[0]), chatId, BotHelper.getAttachText(textFile)));
         } else {
-            queue = PhotoQueue.getInstance().addPhoto(BotHelper.crateMediaGroup(mediaGroup.get(parseQuery[0]), chatId));
+            queue = photoQueue.addPhoto(BotHelper.crateMediaGroup(mediaGroup.get(parseQuery[0]), chatId));
         }
         Arrays.stream(messagesIds).forEach(s -> {
             try {
@@ -332,7 +332,7 @@ public class Bot extends TelegramLongPollingBot {
             }
         });
         mediaGroup.remove(parseQuery[0]);
-        BotHelper.deleteFile(folder.getName());
+        BotHelper.deleteFile(folder.getName(), conf.getPath());
         execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
         SendMessage queueSize = new SendMessage();
         queueSize.setChatId(message.getChatId());

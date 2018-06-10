@@ -1,6 +1,5 @@
 package com.dawdawich.helper;
 
-import com.dawdawich.config.Configuration;
 import org.telegram.telegrambots.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.api.methods.updatingmessages.DeleteMessage;
@@ -18,9 +17,8 @@ import java.util.*;
 
 public class BotHelper {
 
-
-    public static boolean checkUser (int id) throws IOException {
-        for (Integer integer : Configuration.getInstance().getIds()) {
+    public static boolean checkUser(int id, List<Integer> ids) {
+        for (Integer integer : ids) {
             if (integer == id) {
                 return true;
             }
@@ -181,8 +179,8 @@ public class BotHelper {
         return sendMediaGroup;
     }
 
-    public static void deleteFile (String fileName) throws IOException {
-        File file = new File(Configuration.getInstance().getPath() + File.separator + fileName);
+    public static void deleteFile(String fileName, String path) throws IOException {
+        File file = new File(path + File.separator + fileName);
         if (file.exists()) {
             if (file.isDirectory()) {
                 File text = new File(file.getAbsolutePath() + ".txt");

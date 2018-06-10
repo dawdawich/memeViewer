@@ -6,18 +6,12 @@ import java.util.ArrayDeque;
 
 public class PhotoQueue {
 
-    private static PhotoQueue instance;
     private ArrayDeque<PartialBotApiMethod> photos = new ArrayDeque<>();
 
-    private PhotoQueue() {
+    public PhotoQueue() {
 
     }
 
-    public static PhotoQueue getInstance() {
-        if (instance == null)
-            instance = new PhotoQueue();
-        return instance;
-    }
 
     public int addPhoto(PartialBotApiMethod photo) {
         photos.add(photo);

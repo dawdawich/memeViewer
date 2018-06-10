@@ -1,5 +1,7 @@
 package com.dawdawich.config;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -13,12 +15,11 @@ public class Configuration {
     private long chatId;
     private int minInterval;
     private int maxInterval;
-    private static Configuration instance;
     private List<Integer> ids = new ArrayList<>();
 
-    private Configuration() throws IOException {
+    public Configuration(File props) throws IOException {
         Properties properties = new Properties();
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream("application.properties")) {
+        try (InputStream is = new FileInputStream(props)) {
             properties.load(is);
         }
         this.path = properties.getProperty("path");
@@ -59,10 +60,4 @@ public class Configuration {
         return chatId;
     }
 
-    public static Configuration getInstance() throws IOException {
-        if (instance == null) {
-            instance = new Configuration();
-        }
-        return instance;
-    }
 }
