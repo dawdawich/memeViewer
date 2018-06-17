@@ -3,9 +3,11 @@ package com.dawdawich.bot;
 import com.dawdawich.config.Configuration;
 import com.dawdawich.helper.BotHelper;
 import com.dawdawich.helper.MessageHandler;
+import com.dawdawich.utils.EarmarkedPost;
 import com.dawdawich.utils.PhotoQueue;
 import com.dawdawich.utils.TelegramAd;
 import org.telegram.telegrambots.api.methods.PartialBotApiMethod;
+import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.send.SendPhoto;
@@ -201,9 +203,11 @@ public class Bot extends TelegramLongPollingBot {
                         case "ad":
                             recordingAd = true;
                             ad = new TelegramAd();
+                            ad.setChatId(chatId);
                             SendMessage adAnswer = new SendMessage().setChatId(message.getChatId());
-                            adAnswer.setText("Starting record ad!!  Send image, video, gif (or type null if).\n" +
+                            adAnswer.setText("Starting record ad!!  Send image, video, gif.\n" +
                                     "To finish configure ad type 'finish'. For terminate operation type 'terminate'.");
+                            execute(adAnswer);
                             break;
                     }
                 }
@@ -212,10 +216,18 @@ public class Bot extends TelegramLongPollingBot {
                     String s = message.getText();
                     if ("finish".equals(s)) {
                         recordingAd = false;
-
+                        SendMessage adAnswer = new SendMessage().setChatId(message.getChatId());
+                        adAnswer.setText("Configuring ad complete successfully.");
+                        execute(adAnswer);
+                        ad.earmarkedAd();
+                        ad = null;
                         return;
                     } else if ("terminate".equals(s)) {
                         recordingAd = false;
+                        ad = null;
+                        SendMessage adAnswer = new SendMessage().setChatId(message.getChatId());
+                        adAnswer.setText("Configuring ad terminate successfully.");
+                        execute(adAnswer);
                         return;
                     }
                 }
@@ -385,7 +397,14 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public static int sendAd(PartialBotApiMethod ad) throws TelegramApiException {
-        return ((Message)instance.execute(ad)).getMessageId();
+        if (ad instanceof SendPhoto) {
+            return instance.sendPhoto((SendPhoto) ad).getMessageId();
+        } else if (ad instanceof SendDocument) {
+            return instance.sendDocument((SendDocument) ad).getMessageId();
+        } else {
+            return instance.execute((SendMessage)ad).getMessageId();
+        }
+
     }
 
     public static void deleteAd (int adId) throws TelegramApiException {

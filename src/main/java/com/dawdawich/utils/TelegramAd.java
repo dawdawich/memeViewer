@@ -63,35 +63,33 @@ public class TelegramAd {
         this.chatId = chatId;
     }
 
-    public static void earmarkedAd(TelegramAd ad, Bot bot) {
+    public void earmarkedAd() {
         PartialBotApiMethod<Message> newAd;
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        for (InlineKeyboardButton button : ad.getKeyboardButtons()) {
+        for (InlineKeyboardButton button : keyboardButtons) {
             markup.getKeyboard().add(new ArrayList<InlineKeyboardButton>() {{
                 add(button);
             }});
         }
-        if (ad.photo != null) {
+        if (photo != null) {
             newAd = new SendPhoto();
-            ((SendPhoto) newAd).setChatId(ad.chatId);
-            ((SendPhoto) newAd).setPhoto(ad.photo.getFileId());
-            ((SendPhoto) newAd).setCaption(ad.description);
+            ((SendPhoto) newAd).setChatId(chatId);
+            ((SendPhoto) newAd).setPhoto(photo.getFileId());
+            ((SendPhoto) newAd).setCaption(description);
             ((SendPhoto) newAd).setReplyMarkup(markup);
-        } else if (ad.document != null) {
+        } else if (document != null) {
             newAd = new SendDocument();
-            ((SendDocument) newAd).setChatId(ad.chatId);
-            ((SendDocument) newAd).setDocument(ad.document.getFileId());
-            ((SendDocument) newAd).setCaption(ad.description);
+            ((SendDocument) newAd).setChatId(chatId);
+            ((SendDocument) newAd).setDocument(document.getFileId());
+            ((SendDocument) newAd).setCaption(description);
             ((SendDocument) newAd).setReplyMarkup(markup);
         } else {
             newAd = new SendMessage();
-            ((SendMessage) newAd).setChatId(ad.chatId);
-            ((SendMessage) newAd).setText(ad.description);
+            ((SendMessage) newAd).setChatId(chatId);
+            ((SendMessage) newAd).setText(description);
             ((SendMessage) newAd).setReplyMarkup(markup);
         }
-
-
-
+        EarmarkedPost.setAd(timeZone, timeout, hour, minute, newAd);
     }
 }
 

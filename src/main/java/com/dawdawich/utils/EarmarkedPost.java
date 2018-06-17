@@ -1,9 +1,7 @@
 package com.dawdawich.utils;
 
 import com.dawdawich.bot.Bot;
-import com.dawdawich.helper.BotHelper;
 import org.telegram.telegrambots.api.methods.PartialBotApiMethod;
-import org.telegram.telegrambots.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.util.Calendar;
@@ -33,15 +31,24 @@ public class EarmarkedPost implements Runnable {
         this.photoQueue = photoQueue;
     }
 
+    //TODO: перенести проверку на время существования рекламы внутрь TelegramAd, и из него делать операции
+
     @Override
     public void run() {
         while (true) {
             if (adInQueue) {
                 Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-                int minute = calendar.getTime().getMinutes();
-                int hour = calendar.getTime().getHours() + timezone;
-                if (minute == EarmarkedPost.minute || hour = EarmarkedPost.hour) {
-                    adId = Bot.sendAd(ad);
+                int minute = calendar.get(Calendar.MINUTE);
+                int hour = calendar.get(Calendar.HOUR_OF_DAY) + timezone;
+                if (hour > 24) {
+                    hour -= 24;
+                }
+                if (minute == EarmarkedPost.minute && hour == EarmarkedPost.hour) {
+                    try {
+                        adId = Bot.sendAd(ad);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                     activeAd = true;
                     adInQueue = false;
                 }
@@ -52,7 +59,11 @@ public class EarmarkedPost implements Runnable {
                     adTimeInterval--;
                 } else {
                     activeAd = false;
-                    Bot.deleteAd(adId);
+                    try {
+                        Bot.deleteAd(adId);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                 }
             } else {
                 PartialBotApiMethod photo = photoQueue.getPhoto();

@@ -51,6 +51,8 @@ public class MessageHandler {
                 button.setText(params[0]);
                 button.setUrl(params[1]);
                 ad.getKeyboardButtons().add(button);
+                sendAnswer(bot, "Button set successfully", message.getChatId());
+                return;
             }
 
             ad.setDescription(message.getText());
