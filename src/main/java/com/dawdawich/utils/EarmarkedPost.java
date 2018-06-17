@@ -1,13 +1,25 @@
 package com.dawdawich.utils;
 
 import com.dawdawich.bot.Bot;
+import com.dawdawich.helper.BotHelper;
 import org.telegram.telegrambots.api.methods.PartialBotApiMethod;
+import org.telegram.telegrambots.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.util.Calendar;
 import java.util.Random;
+import java.util.TimeZone;
 
 public class EarmarkedPost implements Runnable {
+
+    static private int adTimeInterval;
+    static private int adId;
+    static private boolean activeAd = false;
+    static private boolean adInQueue = false;
+    static private int hour;
+    static private int minute;
+    static private int timezone;
+    static private PartialBotApiMethod ad;
 
     private int time = 0;
     private Random r = new Random();
@@ -24,8 +36,24 @@ public class EarmarkedPost implements Runnable {
     @Override
     public void run() {
         while (true) {
-            if (time > 0) {
+            if (adInQueue) {
+                Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                int minute = calendar.getTime().getMinutes();
+                int hour = calendar.getTime().getHours() + timezone;
+                if (minute == EarmarkedPost.minute || hour = EarmarkedPost.hour) {
+                    adId = Bot.sendAd(ad);
+                    activeAd = true;
+                    adInQueue = false;
+                }
+            }
+            if (time > 0 || activeAd) {
                 time--;
+                if (activeAd && adTimeInterval > 0) {
+                    adTimeInterval--;
+                } else {
+                    activeAd = false;
+                    Bot.deleteAd(adId);
+                }
             } else {
                 PartialBotApiMethod photo = photoQueue.getPhoto();
                 if (photo != null) {
@@ -35,14 +63,7 @@ public class EarmarkedPost implements Runnable {
                         e.printStackTrace();
                     }
                 }
-                if (Calendar.getInstance().get(Calendar.HOUR_OF_DAY) < 6) {
-                    //TODO: add interval for night time
-                    time = r.nextInt(maxInterval - minInterval) + minInterval;
-                } else {
-                    time = r.nextInt(maxInterval - minInterval) + minInterval;
-                }
-                System.out.println("Current hour: " + Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
-                System.out.println("Current minute: " + Calendar.getInstance().get(Calendar.MINUTE));
+                time = r.nextInt(maxInterval - minInterval) + minInterval;
                 System.out.println("Next post in " + time + " minutes.\n");
             }
             try {
@@ -52,4 +73,15 @@ public class EarmarkedPost implements Runnable {
             }
         }
     }
+
+    public static void setAd(int timezone, int adTimeInterval, int hour, int minute, PartialBotApiMethod ad) {
+        adInQueue = true;
+        activeAd = false;
+        EarmarkedPost.timezone = timezone;
+        EarmarkedPost.adTimeInterval = adTimeInterval;
+        EarmarkedPost.hour = hour;
+        EarmarkedPost.minute = minute;
+        EarmarkedPost.ad = ad;
+    }
+
 }
