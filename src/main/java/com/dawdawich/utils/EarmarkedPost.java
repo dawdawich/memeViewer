@@ -31,6 +31,7 @@ public class EarmarkedPost implements Runnable {
     @Override
     public void run() {
         while (true) {
+            long curTime = System.currentTimeMillis();
             if (adInQueue) {
                 Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
                 int minute = calendar.get(Calendar.MINUTE);
@@ -93,7 +94,7 @@ public class EarmarkedPost implements Runnable {
                         }
                     });
             try {
-                Thread.sleep(60000);
+                Thread.sleep(60000 - (System.currentTimeMillis() - curTime));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
