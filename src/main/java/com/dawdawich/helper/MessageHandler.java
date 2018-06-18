@@ -26,10 +26,12 @@ public class MessageHandler {
                 sendAnswer(bot, "Timezone set successfully", message.getChatId());
                 return;
             }
-            if (text.startsWith("timeout")) {
-                text = text.replaceAll("timeout:", "");
-                ad.setTimeout(Integer.parseInt(text));
-                sendAnswer(bot, "Timeout set successfully", message.getChatId());
+            if (text.startsWith("intervals")) {
+                text = text.replaceAll("intervals:", "");
+                String[] intervals = text.split("/");
+                ad.setIntervalTop(Integer.parseInt(intervals[0]));
+                ad.setInterval(Integer.parseInt(intervals[1]));
+                sendAnswer(bot, "intervals set successfully", message.getChatId());
                 return;
             }
             if (text.startsWith("hour")) {

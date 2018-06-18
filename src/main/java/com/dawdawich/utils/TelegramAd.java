@@ -1,7 +1,5 @@
 package com.dawdawich.utils;
 
-import com.dawdawich.bot.Bot;
-import org.telegram.telegrambots.api.methods.BotApiMethod;
 import org.telegram.telegrambots.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
@@ -17,15 +15,19 @@ import java.util.List;
 
 public class TelegramAd {
 
+    List<InlineKeyboardButton> keyboardButtons = new ArrayList<>();
     private String description;
     private int timeZone;
     private Integer hour;
     private Integer minute;
-    private int timeout;
+    private int intervalTop;
+    private int interval;
     private PhotoSize photo;
     private Document document;
     private long chatId;
-    List<InlineKeyboardButton> keyboardButtons = new ArrayList<>();
+    private int adId;
+    private boolean isActive = false;
+    private PartialBotApiMethod<Message> newAd;
 
     public void setDescription(String description) {
         this.description = description;
@@ -43,8 +45,12 @@ public class TelegramAd {
         this.minute = minute;
     }
 
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
+    public void setIntervalTop(int intervalTop) {
+        this.intervalTop = intervalTop;
+    }
+
+    public void setInterval(int interval) {
+        this.interval = interval;
     }
 
     public void setPhoto(PhotoSize photo) {
@@ -63,8 +69,47 @@ public class TelegramAd {
         this.chatId = chatId;
     }
 
+    public int getIntervalTop() {
+        return intervalTop;
+    }
+
+    public int getInterval() {
+        return interval;
+    }
+
+    public int getAdId() {
+        return adId;
+    }
+
+    public void setAdId(int adId) {
+        this.adId = adId;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    public int getTimeZone() {
+        return timeZone;
+    }
+
+    public Integer getHour() {
+        return hour;
+    }
+
+    public Integer getMinute() {
+        return minute;
+    }
+
+    public PartialBotApiMethod<Message> getNewAd() {
+        return newAd;
+    }
+
     public void earmarkedAd() {
-        PartialBotApiMethod<Message> newAd;
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         for (InlineKeyboardButton button : keyboardButtons) {
             markup.getKeyboard().add(new ArrayList<InlineKeyboardButton>() {{
@@ -89,7 +134,8 @@ public class TelegramAd {
             ((SendMessage) newAd).setText(description);
             ((SendMessage) newAd).setReplyMarkup(markup);
         }
-        EarmarkedPost.setAd(timeZone, timeout, hour, minute, newAd);
+        EarmarkedPost.setAd(this);
     }
+
 }
 

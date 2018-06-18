@@ -4,6 +4,7 @@ import com.dawdawich.bot.Bot;
 import org.telegram.telegrambots.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
 import java.util.TimeZone;
@@ -11,13 +12,9 @@ import java.util.TimeZone;
 public class EarmarkedPost implements Runnable {
 
     static private int adTimeInterval;
-    static private int adId;
     static private boolean activeAd = false;
     static private boolean adInQueue = false;
-    static private int hour;
-    static private int minute;
-    static private int timezone;
-    static private PartialBotApiMethod ad;
+    static private ArrayList<TelegramAd> telegramAds = new ArrayList<>();
 
     private int time = 0;
     private Random r = new Random();
@@ -31,27 +28,36 @@ public class EarmarkedPost implements Runnable {
         this.photoQueue = photoQueue;
     }
 
-    //TODO: перенести проверку на время существования рекламы внутрь TelegramAd, и из него делать операции
-
     @Override
     public void run() {
         while (true) {
             if (adInQueue) {
                 Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
                 int minute = calendar.get(Calendar.MINUTE);
-                int hour = calendar.get(Calendar.HOUR_OF_DAY) + timezone;
-                if (hour > 24) {
-                    hour -= 24;
-                }
-                if (minute == EarmarkedPost.minute && hour == EarmarkedPost.hour) {
-                    try {
-                        adId = Bot.sendAd(ad);
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                    }
-                    activeAd = true;
-                    adInQueue = false;
-                }
+                final int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+
+                telegramAds.stream()
+                        .filter(a -> {
+                            int needHour = hour + a.getTimeZone();
+                            if (needHour > 24) {
+                                needHour -= 24;
+                            }
+                            return minute == a.getMinute() && needHour == a.getHour() && !a.isActive();
+                        })
+                        .forEach(a -> {
+                            try {
+                                a.setAdId(Bot.sendAd(a.getNewAd()));
+                                a.setActive(true);
+                                adTimeInterval = a.getIntervalTop();
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
+                            activeAd = true;
+                        });
+
+                adInQueue = telegramAds.stream()
+                        .anyMatch(a -> !a.isActive());
             }
             if (time > 0 || activeAd) {
                 time--;
@@ -59,11 +65,6 @@ public class EarmarkedPost implements Runnable {
                     adTimeInterval--;
                 } else {
                     activeAd = false;
-                    try {
-                        Bot.deleteAd(adId);
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                    }
                 }
             } else {
                 PartialBotApiMethod photo = photoQueue.getPhoto();
@@ -77,6 +78,20 @@ public class EarmarkedPost implements Runnable {
                 time = r.nextInt(maxInterval - minInterval) + minInterval;
                 System.out.println("Next post in " + time + " minutes.\n");
             }
+            telegramAds.stream()
+                    .filter(TelegramAd::isActive)
+                    .forEach(a -> {
+                        if (a.getInterval() > 0) {
+                            a.setInterval(a.getInterval() - 1);
+                        } else {
+                            try {
+                                Bot.deleteAd(a.getAdId());
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
+                            telegramAds.remove(a);
+                        }
+                    });
             try {
                 Thread.sleep(60000);
             } catch (InterruptedException e) {
@@ -85,14 +100,9 @@ public class EarmarkedPost implements Runnable {
         }
     }
 
-    public static void setAd(int timezone, int adTimeInterval, int hour, int minute, PartialBotApiMethod ad) {
+    public static void setAd(TelegramAd telegramAd) {
         adInQueue = true;
-        activeAd = false;
-        EarmarkedPost.timezone = timezone;
-        EarmarkedPost.adTimeInterval = adTimeInterval;
-        EarmarkedPost.hour = hour;
-        EarmarkedPost.minute = minute;
-        EarmarkedPost.ad = ad;
+        telegramAds.add(telegramAd);
     }
 
 }
