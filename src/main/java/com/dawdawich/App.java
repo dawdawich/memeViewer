@@ -36,7 +36,7 @@ public class App {
             thread.start();
 
             TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-            Bot bot = new Bot(conf, photoQueue);
+            Bot bot = new Bot(conf, photoQueue, earmarkedPost);
             try {
                 telegramBotsApi.registerBot(bot);
             } catch (TelegramApiRequestException e) {

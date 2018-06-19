@@ -37,13 +37,15 @@ public class Bot extends TelegramLongPollingBot {
     private Configuration conf;
     private Long chatId;
     private PhotoQueue photoQueue;
+    private EarmarkedPost earmarkedPost;
     private boolean recordingAd = false;
     private TelegramAd ad;
 
-    public Bot(Configuration conf, PhotoQueue photoQueue) {
+    public Bot(Configuration conf, PhotoQueue photoQueue, EarmarkedPost earmarkedPost) {
         this.conf = conf;
         chatId = conf.getChatId();
         this.photoQueue = photoQueue;
+        this.earmarkedPost = earmarkedPost;
     }
 
     public static void send(PartialBotApiMethod photo) throws TelegramApiException {
@@ -216,11 +218,11 @@ public class Bot extends TelegramLongPollingBot {
                     String s = message.getText();
                     if ("finish".equals(s)) {
                         recordingAd = false;
+                        ad.earmarkedAd(earmarkedPost);
+                        ad = null;
                         SendMessage adAnswer = new SendMessage().setChatId(message.getChatId());
                         adAnswer.setText("Configuring ad complete successfully.");
                         execute(adAnswer);
-                        ad.earmarkedAd();
-                        ad = null;
                         return;
                     } else if ("terminate".equals(s)) {
                         recordingAd = false;

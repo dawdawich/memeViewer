@@ -11,10 +11,10 @@ import java.util.TimeZone;
 
 public class EarmarkedPost implements Runnable {
 
-    static private int adTimeInterval;
-    static private boolean activeAd = false;
-    static private boolean adInQueue = false;
-    static private ArrayList<TelegramAd> telegramAds = new ArrayList<>();
+    private int adTimeInterval;
+    private boolean activeAd = false;
+    private boolean adInQueue = false;
+    private ArrayList<TelegramAd> telegramAds = new ArrayList<>();
 
     private int time = 0;
     private Random r = new Random();
@@ -101,7 +101,7 @@ public class EarmarkedPost implements Runnable {
         }
     }
 
-    public static void setAd(TelegramAd telegramAd) {
+    public void setAd(TelegramAd telegramAd) {
         adInQueue = true;
         telegramAds.add(telegramAd);
     }

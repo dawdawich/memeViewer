@@ -109,7 +109,7 @@ public class TelegramAd {
         return newAd;
     }
 
-    public void earmarkedAd() {
+    public void earmarkedAd(EarmarkedPost earmarkedPost) {
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         for (InlineKeyboardButton button : keyboardButtons) {
             markup.getKeyboard().add(new ArrayList<InlineKeyboardButton>() {{
@@ -134,7 +134,7 @@ public class TelegramAd {
             ((SendMessage) newAd).setText(description);
             ((SendMessage) newAd).setReplyMarkup(markup);
         }
-        EarmarkedPost.setAd(this);
+        earmarkedPost.setAd(this);
     }
 
 }
