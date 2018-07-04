@@ -77,7 +77,7 @@ public class Bot extends TelegramLongPollingBot {
                 try {
                     callbackHandler(callbackQuery);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println(("Error while processing callbackQuery"));
                 }
                 messageHandler(message);
             }
@@ -101,6 +101,7 @@ public class Bot extends TelegramLongPollingBot {
                     .limit(5)
                     .forEach(file -> {
                         String attachedText = BotHelper.getAttachText(file);
+                        System.out.println(("Start processing folder for getMessages. Folder name " + file.getName()));
                         if (file.isDirectory()) {
                             List<Message> messages;
                             try {
@@ -128,6 +129,7 @@ public class Bot extends TelegramLongPollingBot {
                             return;
                         }
                         try {
+                            System.out.println(("Start processing image for getMessages. Image name " + file.getName()));
                             if (attachedText != null && !attachedText.isEmpty()) {
                                 sendPhoto(BotHelper.createSendPhoto(file, chatId.getChatId(), attachedText,
                                         getPostDeleteMarkup(file.getName())));
