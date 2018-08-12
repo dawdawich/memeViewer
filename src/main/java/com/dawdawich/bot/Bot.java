@@ -72,8 +72,8 @@ public class Bot extends TelegramLongPollingBot {
         try {
             Message message = update.getMessage();
             CallbackQuery callbackQuery = update.getCallbackQuery();
-            if ((message != null && BotHelper.checkUser(message.getFrom().getId(), conf.getIds())) ||
-                    (callbackQuery != null && BotHelper.checkUser(callbackQuery.getFrom().getId(), conf.getIds()))) {
+            if ((message != null && BotHelper.INSTANCE.checkUser(message.getFrom().getId(), conf.getIds())) ||
+                    (callbackQuery != null && BotHelper.INSTANCE.checkUser(callbackQuery.getFrom().getId(), conf.getIds()))) {
                 try {
                     callbackHandler(callbackQuery);
                 } catch (IOException e) {
@@ -100,16 +100,16 @@ public class Bot extends TelegramLongPollingBot {
                     .filter(f -> !f.getName().contains("txt"))
                     .limit(5)
                     .forEach(file -> {
-                        String attachedText = BotHelper.getAttachText(file);
+                        String attachedText = BotHelper.INSTANCE.getAttachText(file);
                         System.out.println(("Start processing folder for getMessages. Folder name " + file.getName()));
                         if (file.isDirectory()) {
                             List<Message> messages;
                             try {
                                 if (attachedText != null && !attachedText.isEmpty()) {
-                                    messages = sendMediaGroup(BotHelper.crateMediaGroup(file, chatId.getChatId(),
+                                    messages = sendMediaGroup(BotHelper.INSTANCE.crateMediaGroup(file, chatId.getChatId(),
                                             attachedText));
                                 } else {
-                                    messages = sendMediaGroup(BotHelper.crateMediaGroup(file, chatId.getChatId()));
+                                    messages = sendMediaGroup(BotHelper.INSTANCE.crateMediaGroup(file, chatId.getChatId()));
                                 }
                             } catch (TelegramApiException e) {
                                 e.printStackTrace();
@@ -131,10 +131,10 @@ public class Bot extends TelegramLongPollingBot {
                         try {
                             System.out.println(("Start processing image for getMessages. Image name " + file.getName()));
                             if (attachedText != null && !attachedText.isEmpty()) {
-                                sendPhoto(BotHelper.createSendPhoto(file, chatId.getChatId(), attachedText,
+                                sendPhoto(BotHelper.INSTANCE.createSendPhoto(file, chatId.getChatId(), attachedText,
                                         getPostDeleteMarkup(file.getName())));
                             } else {
-                                sendPhoto(BotHelper.createSendPhoto(file, chatId.getChatId(), getPostDeleteMarkup
+                                sendPhoto(BotHelper.INSTANCE.createSendPhoto(file, chatId.getChatId(), getPostDeleteMarkup
                                         (file.getName())));
                             }
                         } catch (TelegramApiException e) {
@@ -154,9 +154,9 @@ public class Bot extends TelegramLongPollingBot {
         secondLine.put("without text", "w:" + fileName);
         secondLine.put("e without text", "t:" + fileName);
         thirdLine.put("delete", "d:" + fileName);
-        keyboardMarkup = BotHelper.addLineMarkup(keyboardMarkup, firstLine);
-        keyboardMarkup = BotHelper.addLineMarkup(keyboardMarkup, secondLine);
-        keyboardMarkup = BotHelper.addLineMarkup(keyboardMarkup, thirdLine);
+        keyboardMarkup = BotHelper.INSTANCE.addLineMarkup(keyboardMarkup, firstLine);
+        keyboardMarkup = BotHelper.INSTANCE.addLineMarkup(keyboardMarkup, secondLine);
+        keyboardMarkup = BotHelper.INSTANCE.addLineMarkup(keyboardMarkup, thirdLine);
         return keyboardMarkup;
     }
 
@@ -172,9 +172,9 @@ public class Bot extends TelegramLongPollingBot {
         secondLine.put("without text", "#:" + formedPost);
         secondLine.put("e without text", "$:" + formedPost);
         thirdLine.put("delete", "@:" + formedPost);
-        keyboardMarkup = BotHelper.addLineMarkup(keyboardMarkup, firstLine);
-        keyboardMarkup = BotHelper.addLineMarkup(keyboardMarkup, secondLine);
-        keyboardMarkup = BotHelper.addLineMarkup(keyboardMarkup, thirdLine);
+        keyboardMarkup = BotHelper.INSTANCE.addLineMarkup(keyboardMarkup, firstLine);
+        keyboardMarkup = BotHelper.INSTANCE.addLineMarkup(keyboardMarkup, secondLine);
+        keyboardMarkup = BotHelper.INSTANCE.addLineMarkup(keyboardMarkup, thirdLine);
 
         return keyboardMarkup;
     }
@@ -236,7 +236,7 @@ public class Bot extends TelegramLongPollingBot {
                     }
                 }
 
-                MessageHandler.handleAd(message, instance, ad);
+                MessageHandler.INSTANCE.handleAd(message, instance, ad);
             }
         }
     }
@@ -302,13 +302,13 @@ public class Bot extends TelegramLongPollingBot {
 
     private void postPhoto(String query, Message message, boolean withText) throws TelegramApiException, IOException {
         String[] queryParams = query.split("[|]");
-        BotHelper.deleteFile(queryParams[0], conf.getPath());
+        BotHelper.INSTANCE.deleteFile(queryParams[0], conf.getPath());
         if (withText) {
-            sendPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId, message.getCaption()));
+            sendPhoto(BotHelper.INSTANCE.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId, message.getCaption()));
         } else {
-            sendPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId));
+            sendPhoto(BotHelper.INSTANCE.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId));
         }
-        execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
+        execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), message.getMessageId()));
     }
 
     private void postPhotos(String query, Message message, boolean withText) throws IOException, TelegramApiException {
@@ -318,24 +318,24 @@ public class Bot extends TelegramLongPollingBot {
         String[] messagesIds = parseQuery[1].split(",");
 
         if (withText && textFile.exists()) {
-            sendMediaGroup(BotHelper.crateMediaGroup(folder, chatId, BotHelper.getAttachText(textFile)));
+            sendMediaGroup(BotHelper.INSTANCE.crateMediaGroup(folder, chatId, BotHelper.INSTANCE.getAttachText(textFile)));
         } else {
-            sendMediaGroup(BotHelper.crateMediaGroup(folder, chatId));
+            sendMediaGroup(BotHelper.INSTANCE.crateMediaGroup(folder, chatId));
         }
         Arrays.stream(messagesIds).forEach(s -> {
             try {
-                execute(BotHelper.createDeleteMessage(message.getChatId(), Integer.parseInt(s)));
+                execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), Integer.parseInt(s)));
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
         });
-        BotHelper.deleteFile(folder.getName(), conf.getPath());
-        execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
+        BotHelper.INSTANCE.deleteFile(folder.getName(), conf.getPath());
+        execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), message.getMessageId()));
     }
 
     private void deletePhoto(String fileName, Message message) throws TelegramApiException, IOException {
-        BotHelper.deleteFile(fileName, conf.getPath());
-        execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
+        BotHelper.INSTANCE.deleteFile(fileName, conf.getPath());
+        execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), message.getMessageId()));
     }
 
     private void deletePhotos(String query, Message message) throws IOException, TelegramApiException {
@@ -344,13 +344,13 @@ public class Bot extends TelegramLongPollingBot {
         String[] messagesIds = parseQuery[1].split(",");
         Arrays.stream(messagesIds).forEach(s -> {
             try {
-                execute(BotHelper.createDeleteMessage(message.getChatId(), Integer.parseInt(s)));
+                execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), Integer.parseInt(s)));
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
         });
-        BotHelper.deleteFile(folder.getName(), conf.getPath());
-        execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
+        BotHelper.INSTANCE.deleteFile(folder.getName(), conf.getPath());
+        execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), message.getMessageId()));
     }
 
     private void earmarkedPhoto(String query, Message message, boolean withText) throws TelegramApiException,
@@ -358,13 +358,13 @@ public class Bot extends TelegramLongPollingBot {
         String[] queryParams = query.split("[|]");
         int queue;
         if (withText) {
-            queue = photoQueue.addPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId,
+            queue = photoQueue.addPhoto(BotHelper.INSTANCE.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId,
                     message.getCaption()));
         } else {
-            queue = photoQueue.addPhoto(BotHelper.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId));
+            queue = photoQueue.addPhoto(BotHelper.INSTANCE.createSendPhoto(message.getPhoto().get(0).getFileId(), chatId));
         }
-        BotHelper.deleteFile(queryParams[0], conf.getPath());
-        execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
+        BotHelper.INSTANCE.deleteFile(queryParams[0], conf.getPath());
+        execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), message.getMessageId()));
         SendMessage queueSize = new SendMessage();
         queueSize.setChatId(message.getChatId());
         queueSize.setText("В очереди сейчас " + queue);
@@ -379,21 +379,21 @@ public class Bot extends TelegramLongPollingBot {
         String[] messagesIds = parseQuery[1].split(",");
         int queue;
         if (withText && textFile.exists()) {
-            queue = photoQueue.addPhoto(BotHelper.crateMediaGroup(mediaGroup.get(parseQuery[0]), chatId, BotHelper
+            queue = photoQueue.addPhoto(BotHelper.INSTANCE.crateMediaGroup(mediaGroup.get(parseQuery[0]), chatId, BotHelper.INSTANCE
                     .getAttachText(textFile)));
         } else {
-            queue = photoQueue.addPhoto(BotHelper.crateMediaGroup(mediaGroup.get(parseQuery[0]), chatId));
+            queue = photoQueue.addPhoto(BotHelper.INSTANCE.crateMediaGroup(mediaGroup.get(parseQuery[0]), chatId));
         }
         Arrays.stream(messagesIds).forEach(s -> {
             try {
-                execute(BotHelper.createDeleteMessage(message.getChatId(), Integer.parseInt(s)));
+                execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), Integer.parseInt(s)));
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
         });
         mediaGroup.remove(parseQuery[0]);
-        BotHelper.deleteFile(folder.getName(), conf.getPath());
-        execute(BotHelper.createDeleteMessage(message.getChatId(), message.getMessageId()));
+        BotHelper.INSTANCE.deleteFile(folder.getName(), conf.getPath());
+        execute(BotHelper.INSTANCE.createDeleteMessage(message.getChatId(), message.getMessageId()));
         SendMessage queueSize = new SendMessage();
         queueSize.setChatId(message.getChatId());
         queueSize.setText("В очереди сейчас " + queue);
@@ -412,7 +412,7 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public static void deleteAd (int adId) throws TelegramApiException {
-        DeleteMessage delete = BotHelper.createDeleteMessage(instance.chatId, adId);
+        DeleteMessage delete = BotHelper.INSTANCE.createDeleteMessage(instance.chatId, adId);
         instance.execute(delete);
     }
 }
